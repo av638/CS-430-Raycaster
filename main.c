@@ -51,21 +51,18 @@ double sphereIntersection(double* p, double r,
 
     a = sqr(Rd[0]) + sqr(Rd[1]) + sqr(Rd[2]);
     b =  2 * (Rd[0] * (Ro[0] - p[0]) + Rd[1] * (Ro[1] - p[1]) + Rd[2] * (Ro[2] - p[2]));
-    c = sqr(Ro[0] - p[0]) + sqr(Ro[1] - p[1]) + sqr(Ro[2] - p[2]) - sqr(r);
-    det = sqr(b) - 4 * a * c;
+    c = sqr(Ro[0]) - (2 * Ro[0] * p[0] + sqr(p[0]) + sqr(Ro[1])) - (2 * Ro[1] * p[1] + sqr(p[1]) + sqr(Ro[2])) - (2 * Ro[2] * p[2] + sqr(p[2])) - sqr(r);
+    det = b*b-4*c;
 
-    if(det < 0) return (-1);
+    t = det;
+    //printf("%d", b);
+    //exit(0);
+    //det = sqrt(det);
+    //t = (-b - det) / ( 2 * a);
 
-    det = sqrt(det);
-    t = (-b - det) / ( 2 * a);
+    if(t < 0) return -1;
 
-    if(t > 0) return t;
-
-    t = (-b + det) / (2 * a);
-
-    if(t > 0) return (-1);
-
-    return (-1);
+    return t;
 }
 // Raycaster will take in the array of objects from the JSON file, the width and height desired
 // as well as the actually number of objects that were read in in order to loop through the array
@@ -73,14 +70,11 @@ double sphereIntersection(double* p, double r,
 // Will return the buffer holding the image that we want to print out to the ppm file
 Pixmap* rayCaster(Object objects[], int width, int height, int numObjects)
 {
-	double cx, cy, h, w, pixelHeight, pixelWidth, best_t;
-    double Ro[3] = {0, 0, 0};
+	double cx, cy, h, w, pixelHeight, pixelWidth;
 	int i, t, x, y;
 
 	PixelColor pixel;
     Pixmap *buffer = (Pixmap *)malloc(sizeof(Pixmap));
-	best_t = INFINITY;
-
 
 	cx = 0;
 	cy = 0;
@@ -108,9 +102,12 @@ Pixmap* rayCaster(Object objects[], int width, int height, int numObjects)
     {
 		for (x = 0; x < width; x++)
 		{   // rd = normalize(P - ro)
-			double Rd[3] = {(cx - (w/2) + pixelWidth * (x + 0.5)), (cy - (h/2) + pixelHeight * (y + 0.5)), 1};
+            double Ro[3] = {0, 0, 0};
+			double Rd[3] = {cx - (w/2) + pixelWidth * (x + 0.5), cy - (h/2) + pixelHeight * (y + 0.5), 1};
 			normalize(Rd);
+            double best_t = INFINITY;
 
+            //printf("%d", Rd);
             // Go through each of the objects at each pixel and find out if they will intersect
 			for (i = 0; i < numObjects; i++)
             {
@@ -127,31 +124,45 @@ Pixmap* rayCaster(Object objects[], int width, int height, int numObjects)
 				else
                 {
 					fprintf(stderr, "Error, object type is not valid.\n");
-					exit(-2);
+					exit(-1);
 				}
 
-				if ((t > 0) && (t < best_t))
+				if (t > 0 && t < best_t)
                 {
 					best_t = t;
-
+                    //printf("%d", t);
 				}
 
-				if((best_t > 0) && (best_t != INFINITY))
+				if(best_t > 0 && best_t != INFINITY)
                 {
-                    printf("Hey we are changing the color!");
-                    pixel.r = objects[i].properties.sphere.color[0];
-					pixel.g = objects[i].properties.sphere.color[1];
-					pixel.b = objects[i].properties.sphere.color[2];
-					buffer->image[y * width + x] = pixel;
-
+                    if(strcmp((objects[i].type), "sphere"))
+                    {
+                        //printf("Hey we are changing the color!");
+                        pixel.r = objects[i].properties.sphere.color[0];
+                        pixel.g = objects[i].properties.sphere.color[1];
+                        pixel.b = objects[i].properties.sphere.color[2];
+                        buffer->image[y * width + x] = pixel;
+                    }
+                    else if(strcmp((objects[i].type), "plane"))
+                    {   //printf("plane color");
+                        pixel.r = objects[i].properties.plane.color[0];
+                        pixel.g = objects[i].properties.plane.color[1];
+                        pixel.b = objects[i].properties.plane.color[2];
+                        buffer->image[y * width + x] = pixel;
+                    }
+                    else
+                    {
+                        fprintf(stderr, "ERROR, Object type has no color property");
+                        exit(-1);
+                    }
 				}
 				// If no intersection let white be the background
 				else
                 { // printf("no intersection!!\n");
 
-					pixel.r =  255;
-					pixel.g = 255;
-					pixel.b = 255;
+					pixel.r =  0;
+					pixel.g = 0;
+					pixel.b = 0;
 					buffer->image[y * width + x] = pixel;
 
 				}
@@ -182,7 +193,7 @@ int main(int argc, char *argv[])
 	else
 	{
 		numObjects = readScene(json, objects);
-        picbuffer = rayCaster(objects, 400, 400, numObjects);
+        picbuffer = rayCaster(objects, 200, 200, numObjects);
 
         int size = picbuffer->height * picbuffer->width;
         //printf("%d", size);
