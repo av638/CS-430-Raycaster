@@ -138,6 +138,7 @@ Pixmap* rayCaster(Object objects[], int width, int height, int numObjects)
 
 				if((best_t > 0) && (best_t != INFINITY))
                 {
+                    printf("Hey we are changing the color!");
                     pixel.r = objects[i].properties.sphere.color[0];
 					pixel.g = objects[i].properties.sphere.color[1];
 					pixel.b = objects[i].properties.sphere.color[2];
@@ -146,10 +147,11 @@ Pixmap* rayCaster(Object objects[], int width, int height, int numObjects)
 				}
 				// If no intersection let white be the background
 				else
-                {
-					pixel.r =  1;
-					pixel.g = 1;
-					pixel.b = 1;
+                { // printf("no intersection!!\n");
+
+					pixel.r =  255;
+					pixel.g = 255;
+					pixel.b = 255;
 					buffer->image[y * width + x] = pixel;
 
 				}
@@ -185,7 +187,7 @@ int main(int argc, char *argv[])
         int size = picbuffer->height * picbuffer->width;
         //printf("%d", size);
 
-        ppmWriter(picbuffer, "test.ppm", size , 6);
+        ppmWriter(picbuffer, "test2.ppm", size , 3);
 
 	}
     printf("Number of objects read from the JSON file: %d\n", numObjects);
