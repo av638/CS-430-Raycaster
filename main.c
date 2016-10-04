@@ -264,8 +264,8 @@ int main(int argc, char *argv[])
         ppmWriter(&picbuffer, argv[3], size , ppmFormat);
 
 	}
-    printf("Number of objects read from the JSON file: %d\n", numObjects);
-
+    //printf("Number of objects read from the JSON file: %d\n", numObjects);
+    printf("Json scene has been created!");
 
 
 	return 0;
