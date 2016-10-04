@@ -32,8 +32,8 @@ double planeIntersection(double* p, double* n, double* Rd, double* Ro){
     //double c = {p[0] - Ro[0], p[1] - Ro[1], p[2] - Ro[2]};
     normalize(n);
     double denom = v3_dot(n, Rd);
-    double *c;
-    c = v3_subtract(p, Ro);
+    double c[3];
+    v3_subtract(p, Ro, c);
     //printf("working");exit (0);
     //double centMinRo = v3_subtract(p, Ro);
     if (fabs(denom) < 0.0001f) return -1;// your favorite epsilon
@@ -245,7 +245,7 @@ int main(int argc, char *argv[])
     Pixmap picbuffer;
     picbuffer.image = (PixelColor*)malloc(sizeof(PixelColor)*width* (height*3));
 
-	json = fopen("objects.json", "r");
+	json = fopen(argv[4], "r");
 	if(json == NULL)
     {
 		fprintf(stderr, "Error: could not open file.\n");
