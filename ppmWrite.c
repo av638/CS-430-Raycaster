@@ -22,7 +22,7 @@ int ppmWriter(Pixmap *buffer, char *outputFileName, int size, int desiredFormat)
     FILE *destination;
     int i, j, numPix;
     char comment[] = {"#This was converted by Alejandro Varela"};
-    char color[64];
+    //char color[64];
     //printf("%s", comment);
 
     destination = fopen(outputFileName, "w");
@@ -34,28 +34,23 @@ int ppmWriter(Pixmap *buffer, char *outputFileName, int size, int desiredFormat)
     }
     else
     {
-        fprintf(destination, "P%d\n%s\n%d %d\n%d\n", desiredFormat, comment, buffer->width, buffer->height, buffer->color);
+        fprintf(destination, "P%d\n%s\n%d %d\n%d\n", desiredFormat, comment, buffer->width, buffer->height, 255);
         // Print out to the outfile in P6 format
-        if(desiredFormat == 6)
-        {
-            numPix = fwrite(buffer->image, sizeof(PixelColor), size, destination);
-        }
-        // Print out to the outfile in P3 format
-        else if(desiredFormat == 3)
-       for(i = 0; i < (buffer->height); i++)
-        {
-			for(j = 0; j < (buffer->width); j++)
-            {
-				sprintf(color, "%d", buffer->image[(buffer->width) * i + j].r);
-				fprintf(destination, "%s\n", color);
-				sprintf(color, "%d", buffer->image[(buffer->width) * i + j].g);
-				fprintf(destination, "%s\n", color);
-				sprintf(color, "%d", buffer->image[(buffer->width) * i + j].b);
-				fprintf(destination, "%s\n", color);
-			}
-		}
-    }
 
+        // Print out to the outfile in P3 format
+        if(desiredFormat == 3)
+        {
+            for(i = 0; i < (buffer->height); i++)
+            {
+                for(j = 0; j < (buffer->width); j++)
+                {
+                    fprintf(destination, "%d ", buffer->image[i * buffer->width *3+3*j].r);
+                    fprintf(destination, "%d ", buffer->image[i * buffer->width *3+3*j+1].g);
+                    fprintf(destination, "%d\n", buffer->image[i * buffer->width *3+ 3*j+2].b);
+                }
+            }
+        }
+    }
     fclose(destination);
     return 0;
 }

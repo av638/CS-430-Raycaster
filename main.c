@@ -237,8 +237,13 @@ int main(int argc, char *argv[])
 {
 	FILE *json;
 	int numObjects, i;
+	int ppmFormat = 3;
+	double width, height;
+	width = atof(argv[1]);
+	height = atof(argv[2]);
+
     Pixmap picbuffer;
-    picbuffer.image = (PixelColor*)malloc(sizeof(PixelColor)*200* (200*3));
+    picbuffer.image = (PixelColor*)malloc(sizeof(PixelColor)*width* (height*3));
 
 	json = fopen("objects.json", "r");
 	if(json == NULL)
@@ -251,12 +256,12 @@ int main(int argc, char *argv[])
 	else
 	{
 		numObjects = readScene(json, objects);
-        rayCaster(objects, &picbuffer, 200, 200, numObjects);
+        rayCaster(objects, &picbuffer, width, height, numObjects);
 
-        int size = 200 * 200;
+        int size = height * width;
         //printf("%d", size);
 
-        ppmWriter(&picbuffer, "test5.ppm", size , 3);
+        ppmWriter(&picbuffer, argv[3], size , ppmFormat);
 
 	}
     printf("Number of objects read from the JSON file: %d\n", numObjects);
