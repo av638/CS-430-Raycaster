@@ -36,7 +36,8 @@ double planeIntersection(double* p, double* n, double* Rd, double* Ro){
     v3_subtract(p, Ro, c);
     //printf("working");exit (0);
     //double centMinRo = v3_subtract(p, Ro);
-    if (fabs(denom) < 0.0001f) return -1;// your favorite epsilon
+
+    if (fabs(denom) < 0.0001f) return -1;// using epsilon
 
     double t = v3_dot(c, n) / denom;
 
@@ -73,15 +74,15 @@ double sphereIntersection(double* p, double r, double* Rd, double* Ro)
 
     }
 
-    // check that discriminant is <, =, or > 0
+    // Check that discriminant is <, =, or > 0
     double disc = sqr(b) - 4*a*c;
 
     double t0, t1;  // solutions
 
-    // no solution
+    // No intersection
     if (disc < 0) return -1;
 
-    // single solution
+    // Single solution
     else if (disc == 0)
     {
         t0 = -1*(b / (2*a));
@@ -99,7 +100,7 @@ double sphereIntersection(double* p, double r, double* Rd, double* Ro)
         //printf("t1 = %lf\n", t1);
     }
 
-        // no intersection
+    // No intersection
     if (t0 < 0 && t1 < 0) return -1;
 
 
@@ -107,8 +108,9 @@ double sphereIntersection(double* p, double r, double* Rd, double* Ro)
 
     else if (t0 > 0 && t1 < 0) return t0;
 
+    // If they were both positives then return the smaller one
     else
-    { // they were both positive
+    {
 
         if (t0 <= t1) return t0;
 
@@ -132,8 +134,6 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
 	double Rd[3] = {0, 0, 0};
 	double point[3] = {0,0, 1};
 	double view[2] = {0,0};
-	//PixelColor backGround;
-    //Pixmap *buffer = (Pixmap *)malloc(sizeof(Pixmap));
 
 	cx = 0;
 	cy = 0;
@@ -141,9 +141,8 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
 	buffer->width = width;
 	buffer->height = height;
 	buffer->color = 255;
-	// Allocated memory size for image
-	//buffer->image = malloc(sizeof(Pixmap) * buffer->width * buffer->height);
 
+    //Grab the size of the view plane
 	for(i = 0; i < numObjects; i++)
     {
 		if(strcmp(objects[i].type, "camera") == 0)
@@ -188,7 +187,7 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
 
 				}
 
-
+                // If they do set the t as well as the object that is intersecting
 				if (t > 0 && t < best_t)
                 {
 					best_t = t;
@@ -196,6 +195,7 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
                     //printf("%d", t);
 				}
 
+                // place the color of the current intersection into the image buffer
 				if(best_t > 0 && best_t != INFINITY)
                 {
                     if(strcmp(objects[best_i].type, "sphere") == 0)
@@ -242,6 +242,8 @@ int main(int argc, char *argv[])
 	width = atof(argv[1]);
 	height = atof(argv[2]);
 
+	// Create the image buffer that will be used for the raycaster
+	// malloc enough space for the image to account for the size and rgb
     Pixmap picbuffer;
     picbuffer.image = (PixelColor*)malloc(sizeof(PixelColor)*width* (height*3));
 
@@ -253,6 +255,8 @@ int main(int argc, char *argv[])
 		exit(-1);
 
 	}
+	// Place the objects into an array, and then call the raycaster.
+	// Finally take the image write out the file, and close the input file and free memory.
 	else
 	{
 		numObjects = readScene(json, objects);
@@ -265,6 +269,8 @@ int main(int argc, char *argv[])
 
 	}
     //printf("Number of objects read from the JSON file: %d\n", numObjects);
+    fclose(json);
+    free(picbuffer.image);
     printf("Json scene has been created!");
 
 
