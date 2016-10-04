@@ -1,5 +1,7 @@
 // Created by Alejandro Varela
-// Project 1: Images
+// Taken from project one but modified to account for rgb instead of just taking the image as a whole
+// I could not get the p6 writer to work properly so I just kept the p3 writer. If I had left the p6 option
+// in there then the image colors would be negative. Otherwise it works just fine.
 #include <stdio.h>
 #include <stdlib.h>
 

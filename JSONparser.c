@@ -1,3 +1,6 @@
+// Takes a JSON file in order to parse it and store it in a structure
+// that is unioned in order to avoid having to allocate memory more than one.
+// Will return the number of objects read to be used for the traversing of the object array.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
