@@ -1,6 +1,3 @@
-// Takes a JSON file in order to parse it and store it in a structure
-// that is unioned in order to avoid having to allocate memory more than one.
-// Will return the number of objects read to be used for the traversing of the object array.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -212,6 +209,19 @@ int readScene(FILE *json, Object objects[])
 					skipWhiteSpace(json);
 					value = nextString(json);
 					objects[numObjects].type = value;
+					// if we have a light then lets set all of the attributes like radial to 0 just to be safe
+					// This is just in case the light has some but not all of the properties that we account for in the struct
+					if(strcmp(value, "light") == 0)
+                    {
+                        objects[numObjects].properties.light.angularAZero = 0;
+                        objects[numObjects].properties.light.radialAOne = 0;
+                        objects[numObjects].properties.light.radialATwo = 0;
+                        objects[numObjects].properties.light.radialAZero = 0;
+
+                        objects[numObjects].properties.light.direction[0] = 0;
+                        objects[numObjects].properties.light.direction[1] = 0;
+                        objects[numObjects].properties.light.direction[2] = 0;
+                    }
 				}
 
 			} else if(strcmp(name, "width") == 0) {
@@ -220,12 +230,11 @@ int readScene(FILE *json, Object objects[])
 				//printf("%c", c);
 				c = nextChar(json);
 
-				if(c != ':') {
-
+				if(c != ':')
+                {
 					fprintf(stderr, "Error, line number %d; invalid separator '%c'.\n", lineNumber, c);
 					fclose(json);
 					exit(-3);
-
 				}
 				// If it is the width then lets place it in the camera structure in the object array
 				else
@@ -239,12 +248,11 @@ int readScene(FILE *json, Object objects[])
 				skipWhiteSpace(json);
 				c = nextChar(json);
 
-				if(c != ':') {
-
+				if(c != ':')
+                {
 					fprintf(stderr, "Error, line number %d; invalid separator '%c'.\n", lineNumber, c);
 					fclose(json);
 					exit(-1);
-
 				}
 				// If it is the height then lets place it in the camera structure in the objects array
 				else
@@ -258,12 +266,11 @@ int readScene(FILE *json, Object objects[])
 				skipWhiteSpace(json);
 				c = nextChar(json);
 
-				if(c != ':') {
-
+				if(c != ':')
+                {
 					fprintf(stderr, "Error, line number %d; invalid separator '%c'.\n", lineNumber, c);
 					fclose(json);
 					exit(-1);
-
 				}
                 // If it is the radius then lets place it in the sphere structure in the objects array
 				else
@@ -272,17 +279,88 @@ int readScene(FILE *json, Object objects[])
 					objects[numObjects].properties.sphere.radius = nextNumber(json);
 				}
 
+			} else if(strcmp(name, "radialATwo") == 0) {
+
+				skipWhiteSpace(json);
+				c = nextChar(json);
+
+				if(c != ':')
+                {
+					fprintf(stderr, "Error, line number %d; invalid separator '%c'.\n", lineNumber, c);
+					fclose(json);
+					exit(-1);
+				}
+				// If it is the radialATwo then lets place it in the camera structure in the objects array
+				else
+                {
+					skipWhiteSpace(json);
+					objects[numObjects].properties.light.radialATwo = nextNumber(json);
+				}
+
+			} else if(strcmp(name, "radialAOne") == 0) {
+
+				skipWhiteSpace(json);
+				c = nextChar(json);
+
+				if(c != ':')
+                {
+					fprintf(stderr, "Error, line number %d; invalid separator '%c'.\n", lineNumber, c);
+					fclose(json);
+					exit(-1);
+				}
+				// If it is the radialAOne then lets place it in the camera structure in the objects array
+				else
+                {
+					skipWhiteSpace(json);
+					objects[numObjects].properties.light.radialAOne = nextNumber(json);
+				}
+
+			} else if(strcmp(name, "radialAZero") == 0) {
+
+				skipWhiteSpace(json);
+				c = nextChar(json);
+
+				if(c != ':')
+                {
+					fprintf(stderr, "Error, line number %d; invalid separator '%c'.\n", lineNumber, c);
+					fclose(json);
+					exit(-1);
+				}
+				// If it is the radialAZero then lets place it in the camera structure in the objects array
+				else
+                {
+					skipWhiteSpace(json);
+					objects[numObjects].properties.light.radialAZero = nextNumber(json);
+				}
+
+			} else if(strcmp(name, "angularAZero") == 0) {
+
+				skipWhiteSpace(json);
+				c = nextChar(json);
+
+				if(c != ':')
+                {
+					fprintf(stderr, "Error, line number %d; invalid separator '%c'.\n", lineNumber, c);
+					fclose(json);
+					exit(-1);
+				}
+				// If it is the angularAZero then lets place it in the camera structure in the objects array
+				else
+                {
+					skipWhiteSpace(json);
+					objects[numObjects].properties.light.angularAZero = nextNumber(json);
+				}
+
 			} else if(strcmp(name, "color") == 0) {
 
 				skipWhiteSpace(json);
 				c = nextChar(json);
 
-				if(c != ':') {
-
+				if(c != ':')
+                {
 					fprintf(stderr, "Error, line number %d; invalid separator '%c'.\n", lineNumber, c);
 					fclose(json);
 					exit(-1);
-
 				}
 				// If we have reached the color then lets place it into the right object in an array
 				else
@@ -290,30 +368,84 @@ int readScene(FILE *json, Object objects[])
 					skipWhiteSpace(json);
 					vector = nextVector(json);
 
-					if(strcmp(objects[numObjects].type, "sphere") == 0)
-                    {
-						objects[numObjects].properties.sphere.color[0] = vector[0];
-						objects[numObjects].properties.sphere.color[1] = vector[1];
-						objects[numObjects].properties.sphere.color[2] = vector[2];
-
-					} else if(strcmp(objects[numObjects].type, "plane") == 0) {
-
-						objects[numObjects].properties.plane.color[0] = vector[0];
-						objects[numObjects].properties.plane.color[1] = vector[1];
-						objects[numObjects].properties.plane.color[2] = vector[2];
+                        if(strcmp(objects[numObjects].type, "light") == 0){
+                        objects[numObjects].properties.light.color[0] = vector[0];
+						objects[numObjects].properties.light.color[1] = vector[1];
+						objects[numObjects].properties.light.color[2] = vector[2];
 					}
+
 				}
 
-			} else if(strcmp(name, "position") == 0) {
+			}else if(strcmp(name, "diffuseColor") == 0) {
 
 				skipWhiteSpace(json);
 				c = nextChar(json);
 
-				if(c != ':') {
+				if(c != ':')
+                {
 					fprintf(stderr, "Error, line number %d; invalid separator '%c'.\n", lineNumber, c);
 					fclose(json);
 					exit(-1);
+				}
+				// If we have reached the diffuseColor then lets place it into the right object in an array
+				else
+                {
+					skipWhiteSpace(json);
+					vector = nextVector(json);
+					if(strcmp(objects[numObjects].type, "plane") == 0) {
 
+						objects[numObjects].properties.plane.diffuseColor[0] = vector[0];
+						objects[numObjects].properties.plane.diffuseColor[1] = vector[1];
+						objects[numObjects].properties.plane.diffuseColor[2] = vector[2];
+
+					}else if(strcmp(objects[numObjects].type, "sphere") == 0) {
+
+                    objects[numObjects].properties.sphere.diffuseColor[0] = vector[0];
+                    objects[numObjects].properties.sphere.diffuseColor[1] = vector[1];
+                    objects[numObjects].properties.sphere.diffuseColor[2] = vector[2];
+					}
+                }
+
+            } else if(strcmp(name, "specularColor") == 0) {
+
+				skipWhiteSpace(json);
+				c = nextChar(json);
+
+				if(c != ':')
+                {
+					fprintf(stderr, "Error, line number %d; invalid separator '%c'.\n", lineNumber, c);
+					fclose(json);
+					exit(-1);
+				}
+				// If we have reached the specularColor then lets place it into the right object in an array
+				else
+                {
+					skipWhiteSpace(json);
+					vector = nextVector(json);
+					if(strcmp(objects[numObjects].type, "plane") == 0) {
+
+						objects[numObjects].properties.plane.specularColor[0] = vector[0];
+						objects[numObjects].properties.plane.specularColor[1] = vector[1];
+						objects[numObjects].properties.plane.specularColor[2] = vector[2];
+
+					}else if(strcmp(objects[numObjects].type, "sphere") == 0) {
+
+                        objects[numObjects].properties.sphere.specularColor[0] = vector[0];
+                        objects[numObjects].properties.sphere.specularColor[1] = vector[1];
+                        objects[numObjects].properties.sphere.specularColor[2] = vector[2];
+					}
+                }
+
+            }else if(strcmp(name, "position") == 0) {
+
+				skipWhiteSpace(json);
+				c = nextChar(json);
+
+				if(c != ':')
+                {
+					fprintf(stderr, "Error, line number %d; invalid separator '%c'.\n", lineNumber, c);
+					fclose(json);
+					exit(-1);
 				}
 				// If we have reached the position then lets place it in an array of the proper object
 				else
@@ -331,7 +463,13 @@ int readScene(FILE *json, Object objects[])
 						objects[numObjects].properties.plane.position[0] = vector[0];
 						objects[numObjects].properties.plane.position[1] = vector[1];
 						objects[numObjects].properties.plane.position[2] = vector[2];
+
+					} else if(strcmp(objects[numObjects].type, "light") == 0){
+                        objects[numObjects].properties.light.position[0] = vector[0];
+						objects[numObjects].properties.light.position[1] = vector[1];
+						objects[numObjects].properties.light.position[2] = vector[2];
 					}
+
 				}
 
 			} else if(strcmp(name, "normal") == 0) {
@@ -339,11 +477,11 @@ int readScene(FILE *json, Object objects[])
 				skipWhiteSpace(json);
 				c = nextChar(json);
 
-				if(c != ':') {
+				if(c != ':')
+                {
 					fprintf(stderr, "Error, line number %d; unexpected character '%c'.\n", lineNumber, c);
 					fclose(json);
 					exit(-1);
-
 				}
 				// If it we have found the normal attribute then lets place it in the plane structure in the object array
 				else
@@ -356,7 +494,30 @@ int readScene(FILE *json, Object objects[])
 					objects[numObjects].properties.plane.normal[2] = vector[2];
 				}
 
+			} else if(strcmp(name, "direction") == 0) {
+
+				skipWhiteSpace(json);
+				c = nextChar(json);
+
+				if(c != ':')
+                {
+					fprintf(stderr, "Error, line number %d; unexpected character '%c'.\n", lineNumber, c);
+					fclose(json);
+					exit(-1);
+				}
+				// If it we have found the normal attribute then lets place it in the plane structure in the object array
+				else
+                {
+					skipWhiteSpace(json);
+					vector = nextVector(json);
+
+					objects[numObjects].properties.light.direction[0] = vector[0];
+					objects[numObjects].properties.light.direction[1] = vector[1];
+					objects[numObjects].properties.light.direction[2] = vector[2];
+				}
+
 			}
+
 			// Otherwise if there was some other object attribute then lets exit the program
 			else
             {

@@ -6,6 +6,16 @@
 #ifndef JSONOBJECTS_H_INCLUDED
 #define JSONOBJECTS_H_INCLUDED
 
+typedef struct Light
+{
+    double color[3];
+    double position[3];
+    double direction[3];
+    double radialATwo, radialAOne, radialAZero;
+    double angularAZero;
+
+} Light;
+
 typedef struct Camera
 {
 	double width;
@@ -15,8 +25,9 @@ typedef struct Camera
 
 typedef struct Plane
 {
-	double color[3];
-	double position[3];
+	double diffuseColor[3];
+	double specularColor[3];
+    double position[3];
 	double normal[3];
 
 } Plane;
@@ -24,8 +35,9 @@ typedef struct Plane
 
 typedef struct Sphere
 {
-	double color[3];
-	double position[3];
+	double diffuseColor[3];
+	double specularColor[3];
+    double position[3];
 	double radius;
 
 } Sphere;
@@ -37,6 +49,7 @@ typedef struct Object
 	union properties
 	{
 		Camera camera;
+        Light light;
 		Plane plane;
 		Sphere sphere;
 
