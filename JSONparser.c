@@ -279,7 +279,7 @@ int readScene(FILE *json, Object objects[])
 					objects[numObjects].properties.sphere.radius = nextNumber(json);
 				}
 
-			} else if(strcmp(name, "radialATwo") == 0) {
+			} else if(strcmp(name, "radial-a2") == 0) {
 
 				skipWhiteSpace(json);
 				c = nextChar(json);
@@ -297,7 +297,7 @@ int readScene(FILE *json, Object objects[])
 					objects[numObjects].properties.light.radialATwo = nextNumber(json);
 				}
 
-			} else if(strcmp(name, "radialAOne") == 0) {
+			} else if(strcmp(name, "radial-a1") == 0) {
 
 				skipWhiteSpace(json);
 				c = nextChar(json);
@@ -315,7 +315,7 @@ int readScene(FILE *json, Object objects[])
 					objects[numObjects].properties.light.radialAOne = nextNumber(json);
 				}
 
-			} else if(strcmp(name, "radialAZero") == 0) {
+			} else if(strcmp(name, "radial-a0") == 0) {
 
 				skipWhiteSpace(json);
 				c = nextChar(json);
@@ -333,7 +333,7 @@ int readScene(FILE *json, Object objects[])
 					objects[numObjects].properties.light.radialAZero = nextNumber(json);
 				}
 
-			} else if(strcmp(name, "angularAZero") == 0) {
+			} else if(strcmp(name, "angular-a0") == 0) {
 
 				skipWhiteSpace(json);
 				c = nextChar(json);
@@ -376,7 +376,7 @@ int readScene(FILE *json, Object objects[])
 
 				}
 
-			}else if(strcmp(name, "diffuseColor") == 0) {
+			}else if(strcmp(name, "diffuse_color") == 0) {
 
 				skipWhiteSpace(json);
 				c = nextChar(json);
@@ -406,7 +406,7 @@ int readScene(FILE *json, Object objects[])
 					}
                 }
 
-            } else if(strcmp(name, "specularColor") == 0) {
+            } else if(strcmp(name, "specular_color") == 0) {
 
 				skipWhiteSpace(json);
 				c = nextChar(json);
