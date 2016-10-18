@@ -23,12 +23,15 @@ static inline void  v3_subtract(v3 x, v3 y, v3 c)
     c[2] = x[2] - y[2];
     //return c;
 }
-static inline void v3_scale(v3 x, int s, v3 z)
+static inline void v3_scale(v3 x, double s, v3 z)
 {   //v3 z;
-
+    //printf("%lf", s);
     z[0] = x[0] * s;
+
     z[1] = x[1] * s;
+
     z[2] = x[2] * s;
+
 //    return c;
 
 }
