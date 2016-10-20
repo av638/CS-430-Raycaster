@@ -10,6 +10,8 @@
 #include "ppmWrite.c"
 #include "dotMath.h"
 
+#define PI 3.14159265
+
 Object objects[128];
 
 static inline double sqr(double v)
@@ -62,21 +64,27 @@ double clamp(double colorVal){
 // If there is no intersection with the plane then we will return -1 otherwise return a t
 double planeIntersection(double* p, double* n, double* Rd, double* Ro){
     //double c = {p[0] - Ro[0], p[1] - Ro[1], p[2] - Ro[2]};
+    double alph,delta;
+
     normalize(n);
-    double denom = v3_dot(n, Rd);
-    double c[3];
-    v3_subtract(p, Ro, c);
-    //printf("working");exit (0);
-    //double centMinRo = v3_subtract(p, Ro);
 
-    if (fabs(denom) < 0.0001f) return -1;// using epsilon
+    alph = v3_dot(n, Rd);
 
-    double t = v3_dot(c, n) / denom;
+    // the plane is parallel to the ray
+    if (fabs(alph) <0.0001) return -1;
 
-    // no intersection
-    if(t < 0.0) return -1;
+    double incident_vector[3];
+    v3_subtract(p, Ro, incident_vector);
+    delta = v3_dot(incident_vector, n);
 
-    return t;
+    double t = delta/alph; // whcih means we check thea1 and thea2
+
+    // reflection, no intersection
+    if (t<0.0) return -1;
+
+    //printf("plane_intersection finished works\n");
+    return t; // return something, but not t , need to figure out it
+
 }
 
 
@@ -86,72 +94,30 @@ double planeIntersection(double* p, double* n, double* Rd, double* Ro){
 double sphereIntersection(double* p, double r, double* Rd, double* Ro)
 {
 
-    double a, b, c;
+     double a, b;
+    double vector_diff[3];
+    v3_subtract(Ro, p, vector_diff);
+
     // calculate quadratic formula
-    // First find a, b, c
-
-    a = sqr(Rd[0]) + sqr(Rd[1]) + sqr(Rd[2]);
-    //printf("value of a: %lf\n", a);
-    b = 2 * (Rd[0]*(Ro[0]-p[0]) + Rd[1]*(Ro[1]-p[1]) + Rd[2]*(Ro[2]-p[2]));
-    //printf("value of b: %lf\n", b);
-    c = sqr(Ro[0]-p[0]) + sqr(Ro[1]-p[1]) + sqr(Ro[2]-p[2]) - sqr(r);
-    //printf("value of c: %lf\n", c);
-
-    // make sure a is 1 (means the ray direction was normalized)
-    if (a > 1.0001 || a < .9999) {
-
-        //printf("a = %lf\n", a);
-        fprintf(stderr, "Ray direction was not normalized\n");
-        exit(-1);
-
-    }
-
-    // Check that discriminant is <, =, or > 0
-    double disc = sqr(b) - 4*a*c;
-
-    double t0, t1;  // solutions
-
-    // No intersection
-    if (disc < 0) return -1;
-
-    // Single solution
-    else if (disc == 0)
-    {
-        t0 = -1*(b / (2*a));
-        return t0;
-        //printf("t0 = %lf\n", t0);
-
-    }
-
-    // 2 solutions: find the smaller
-    else
-    {
-        t0 = (-1*b - sqrt(sqr(b) - 4*c))/2;
-        t1 = (-1*b + sqrt(sqr(b) - 4*c))/2;
-        //printf("t0 = %lf\n", t0);
-        //printf("t1 = %lf\n", t1);
-    }
-
-    // No intersection
-    if (t0 < 0 && t1 < 0) return -1;
+    a = 2 * (Rd[0]*vector_diff[0] + Rd[1]*vector_diff[1] + Rd[2]*vector_diff[2]);
+    b = sqr(vector_diff[0]) + sqr(vector_diff[1]) + sqr(vector_diff[2]) - sqr(r);
 
 
-    else if (t0 < 0 && t1 > 0) return t1;
+    // check that discriminant is <, =, or > 0
+    double disc = sqr(a) - 4*b;
+    double t;
 
-    else if (t0 > 0 && t1 < 0) return t0;
+    // solutions
+    if (disc < 0) return -1; // no solution
 
-    // If they were both positives then return the smaller one
-    else
-    {
+    disc = sqrt(disc);
+    t = (-a - disc) / 2.0;
 
-        if (t0 <= t1) return t0;
+    if (t < 0.0) t = (-a + disc) / 2.0;
 
-        else return t1;
-    }
-    //printf("value of t0: %lf\n", t0);
-    //printf("value of t1: %lf\n", t1);
-    //return -1;
+    if (t < 0.0) return -1;
 
+    return t;
 }
 
 int shadeCheck(Object objects[], double* newRd, double* newRo, int numObjects, int closestObject, double maxDistance)
@@ -185,7 +151,6 @@ int shadeCheck(Object objects[], double* newRd, double* newRo, int numObjects, i
         if (newT > 0 && newT < newBestT)
         {
             //best_t = t;
-
             newBest_o = k;
 
         }
@@ -202,6 +167,7 @@ int shadeCheck(Object objects[], double* newRd, double* newRo, int numObjects, i
 void calculateDiffuse(double *objNormal, double *light, double *illumColor, double *objDiffuse, double *outColor) {
 
     // K_a*I_a should be added to the beginning of this whole thing, which is a constant and ambient light
+    // but we don't need it for this project
     double normDotLight = v3_dot(objNormal, light);
 
     if (normDotLight > 0)
@@ -212,7 +178,7 @@ void calculateDiffuse(double *objNormal, double *light, double *illumColor, doub
         diffuseProduct[1] = objDiffuse[1] * illumColor[1];
         diffuseProduct[2] = objDiffuse[2] * illumColor[2];
 
-        // multiply by n_dot_l and store in out_color
+        // calculate the diffuse color
         v3_scale(diffuseProduct, normDotLight, outColor);
         /*printf("Color is: %lf", outColor[1]);
         printf("Color is: %lf", outColor[2]);*/
@@ -220,11 +186,9 @@ void calculateDiffuse(double *objNormal, double *light, double *illumColor, doub
 
     else
     {
-        // would normally return K_a*I_a here...
         outColor[0] = 0;
         outColor[1] = 0;
         outColor[2] = 0;
-
     }
 }
 
@@ -235,7 +199,7 @@ void calculateDiffuse(double *objNormal, double *light, double *illumColor, doub
 void calculateSpecular(double ns, double *light, double *lightRef, double *objNormal,
                         double *V, double *objSpecular, double *illumColor, double *outColor) {
 
-    double rayDotLight = v3_dot(light, lightRef);
+    double rayDotLight = v3_dot(V, lightRef);
     double normDotLight = v3_dot(objNormal, light);
 
     if (rayDotLight > 0 && normDotLight > 0)
@@ -260,26 +224,50 @@ void calculateSpecular(double ns, double *light, double *lightRef, double *objNo
 
 }
 
-double calculateAngularAt(Object objects[], double rayToObject[3], int numObjects, int currLight)
-{
+// Calculate the angular attenuation with the lights direction
+// If no there is no theta or if theta is 0 then it is a point light
+// If there is no direction then it is also a point light
+// This is used only for spot lights
+double calculateAngularAt(Object objects[], double intersection[3], int numObjects, int currLight)
+{       // direction, theta and angular attenuation
+        double cosAlpha = v3_dot(intersection, objects[currLight].properties.light.direction);
+        double theta = objects[currLight].properties.light.theta;
+        //ADD theta to the parser
+        cosAlpha = cos(cosAlpha)*(PI/180.0);
+
         //check if light is not a spotlight. if not, return 1.0
-            double directionDotLight = v3_dot(objects[currLight].properties.light.direction, rayToObject);
+       if (theta == 0)
+             return 1.0;
+        // It is a spotlight so lets calculate it Vobj dot Vlight = cos alpha < cos theta
+        // cos alpha = Vobj dot Vlight need to convert to degrees to compare to theta
+        // theta is in degrees
+        else if( cosAlpha < theta)
+        {
+            return 0.0;
+        }
+        else
+        {
+            double directionDotLight = v3_dot(objects[currLight].properties.light.direction, intersection);
             double fang = pow(directionDotLight, objects[currLight].properties.light.angularAZero);
-            return 1.0;
+            return fang;
+        }
 
 }
 
+// Calculate the radial attenuation with radial attenuation  0,1,2 and the distance to the light
+// This is only for point lights
 double calculateRadialAt(double aOne, double aTwo, double aZero, double distance)
 {
     if(distance == INFINITY)
     {
-        return 1;
+        return 1.0;
     }
 
     return 1/(aTwo*pow(distance,2) + aOne*distance + aZero);
 
 
 }
+
 // Raycaster will take in the array of objects from the JSON file, the width and height desired
 // as well as the actually number of objects that were read in in order to loop through the array
 // of objects
@@ -305,8 +293,8 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
     {
 		if(strcmp(objects[i].type, "camera") == 0)
         {
-			h = objects[i].properties.camera.height;
-			w = objects[i].properties.camera.width;
+			h = (double)objects[i].properties.camera.height;
+			w = (double)objects[i].properties.camera.width;
 		}
 	}
 
@@ -316,9 +304,9 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
     // Start going row by column and checking whether each pixel intersects with an object or not
 	for (y = 0; y < width; y++)
     {
-        point[1] = -(view[1] - h/2.0 + pixelHeight*(y + 0.5));
 		for (x = 0; x < height; x++)
-		{
+		{   point[1] = -(view[1] - h/2.0 + pixelHeight*(y + 0.5));
+
             point[0] = view[0] - w/2.0 + pixelWidth*(x + 0.5);
             normalize(point);
 			Rd[0] = point[0];
@@ -342,7 +330,6 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
 
 					t = planeIntersection(objects[i].properties.plane.position, objects[i].properties.plane.normal, Rd, Ro);
                     //printf("%d", i);
-
 				}
 
                 // If they do set the t as well as the object that is intersecting
@@ -356,7 +343,7 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
                 double* color = malloc(sizeof(double)*3);
 
                 // place the color of the current intersection into the image buffer
-				if(best_t > 0 && best_t != INFINITY)
+				if(best_t > 0 && best_t != INFINITY && best_t != -1)
                 {
                     if(strcmp(objects[best_i].type, "sphere") == 0)
                     {  // printf("hello there!");
@@ -378,7 +365,8 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
 
                                 double distanceTLight = v3_len(Rdn);
                                 normalize(Rdn);
-
+                                //printf("%lf", distanceTLight);
+                                //exit(0);
                                 double otherObjIntersect = shadeCheck(objects, Rdn, Ron, numObjects, best_i, distanceTLight);
                                 // there is an object in the way so shade in
                                 if(otherObjIntersect != -1)
@@ -397,10 +385,13 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
 
                                     normalize(n);
                                     double lVector[3] = {Rdn[0], Rdn[1], Rdn[2]}; // light vector is just Rdn
-                                    double distanceVector[3] = {Ron[0] - objects[best_i].properties.light.position[0], Ron[1] - objects[best_i].properties.light.position[1],Ron[2] - objects[best_i].properties.light.position[2]};
+                                    normalize(lVector);
+                                    //double distanceVector[3] = {Ron[0] - objects[best_i].properties.light.position[0], Ron[1] - objects[best_i].properties.light.position[1],Ron[2] - objects[best_i].properties.light.position[2]};
 
                                     double lReflection[3];
+                                    normalize(lReflection);
                                     double V[3] = {Rd[0], Rd[1], Rd[2]}; // original ray direction
+                                    //normalize(V);
                                     double diffuseColor[3];
                                     double specularColor[3];
                                     double diffPlusSpec[3];
@@ -410,11 +401,11 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
 
                                     //printf("%d", objects[best_i].properties.sphere.diffuseColor[0]);
                                     calculateDiffuse(n, lVector, objects[l].properties.light.color, objects[best_i].properties.sphere.diffuseColor, diffuseColor);
-                                    calculateSpecular(1, lVector, lReflection, n, V, objects[best_i].properties.sphere.specularColor, objects[l].properties.light.color, specularColor);
+                                    calculateSpecular(20, lVector, lReflection, n, V, objects[best_i].properties.sphere.specularColor, objects[l].properties.light.color, specularColor);
 
                                     v3_add(diffuseColor, specularColor, diffPlusSpec);
 
-                                    v3_scale(lVector, -1, lightRayToClosestObj);
+                                    v3_scale(Rdn, -1, lightRayToClosestObj);
 
                                     double fang = calculateAngularAt(objects, lightRayToClosestObj, numObjects, l);
                                     double frad = calculateRadialAt(objects[l].properties.light.radialAOne, objects[l].properties.light.radialATwo, objects[l].properties.light.radialAZero, distanceTLight);
@@ -446,10 +437,9 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
                     }
                     else if(strcmp(objects[best_i].type, "plane") == 0)
                     {   //printf("plane color");
-                        /*buffer->image[y*3 * buffer->width + x*3].r = objects[best_i].properties.plane.diffuseColor[0]*255 ;
-                        buffer->image[y*3 * buffer->width + x*3+1].g = objects[best_i].properties.plane.diffuseColor[1]*255;
-                        buffer->image[y*3 * buffer->width + x*3+2].b = objects[best_i].properties.plane.diffuseColor[2]*255;*/
-                                              color[0] = 0;//ambientColor[0];
+                        //printf("hi there!");
+
+                        color[0] = 0;//ambientColor[0];
                         color[1] = 0;//ambientColor[1];
                         color[2] = 0;//ambientColor[2];
                         // In order to find a shadow
@@ -458,47 +448,52 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
                             // Look for a light to see if that object has a shadow casted on it by a light
                             if(strcmp(objects[l].type, "light") == 0)
                             {   // calc new ray origin and direction
+                                //printf("hello");
                                 double temp[3];
                                 double Ron[3];
                                 double Rdn[3];
                                 v3_scale(Rd, best_t, temp);
                                 v3_add(temp, Ro, Ron);
                                 v3_subtract(objects[l].properties.light.position, Ron, Rdn);
-                                normalize(Rdn);
+
                                 double distanceTLight = v3_len(Rdn);
+                                normalize(Rdn);
 
                                 double otherObjIntersect = shadeCheck(objects, Rdn, Ron, numObjects, best_i, distanceTLight);
                                 // there is an object in the way so shade in
                                 if(otherObjIntersect != -1)
-                                {   //printf("hi there");
-
+                                {
                                     continue;
                                 }
                                 // otherwise there is no object in between us and the light source
                                 else
                                 {
                                     //printf("hello");
-                                    double planePos[3] = {objects[best_i].properties.plane.position[0],objects[best_i].properties.plane.position[1],objects[best_i].properties.plane.position[2]};
+                                    //double planePos[3] = {objects[best_i].properties.plane.position[0],objects[best_i].properties.plane.position[1],objects[best_i].properties.plane.position[2]};
 
-                                    //double n[3] = {Ron[0] - planePos[0], Ron[1]-planePos[1], Ron[2]-planePos[2]}; //objects[best_i]->normal;
+                                    double n[3] = {objects[best_i].properties.plane.normal[0],objects[best_i].properties.plane.normal[1],objects[best_i].properties.plane.normal[2]}; //objects[best_i]->normal;
                                     //n = v3_subtract(Ron, objects[best_i].properties.sphere.position, n);
+                                    normalize(n);
                                     double lVector[3] = {Rdn[0], Rdn[1], Rdn[2]}; // light vector is just Rdn
+                                    normalize(lVector);
                                     double lReflection[3];
                                     double V[3] = {Rd[0], Rd[1], Rd[2]};
+                                    v3_reflect(lVector, n, lReflection); // in the book
+                                    normalize(lReflection);
                                     double diffuseColor[3];
                                     double specularColor[3];
                                     double diffPlusSpec[3];
+
                                     double lightRayToClosestObj[3];
                                     //printf("problem is here\n");
-                                    v3_reflect(lVector, Ron, lReflection); // in the book
 
                                     //printf("%d", objects[best_i].properties.sphere.diffuseColor[0]);
-                                    calculateDiffuse(Ron, lVector, objects[l].properties.light.color, objects[best_i].properties.plane.diffuseColor, diffuseColor);
-                                    calculateSpecular(1, lVector, lReflection, Ron, V, objects[best_i].properties.plane.specularColor, objects[l].properties.light.color, specularColor);
+                                    calculateDiffuse(n, lVector, objects[l].properties.light.color, objects[best_i].properties.plane.diffuseColor, diffuseColor);
+                                    calculateSpecular(20, lVector, lReflection, n, V, objects[best_i].properties.plane.specularColor, objects[l].properties.light.color, specularColor);
 
                                     v3_add(diffuseColor, specularColor, diffPlusSpec);
 
-                                    v3_scale(lVector, -1, lightRayToClosestObj);
+                                    v3_scale(Rdn, -1, lightRayToClosestObj);
 
                                     double fang = calculateAngularAt(objects, lightRayToClosestObj, numObjects, l);
                                     double frad = calculateRadialAt(objects[l].properties.light.radialAOne, objects[l].properties.light.radialATwo, objects[l].properties.light.radialAZero, distanceTLight);
@@ -530,9 +525,9 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
 				else
                 { // printf("no intersection!!\n");
 
-                    buffer->image[y*3 * buffer->width + x*3].r = 1*255 ;
-                    buffer->image[y*3 * buffer->width + x*3+1].g = 1*255;
-                    buffer->image[y*3 * buffer->width + x*3+2].b = 1*255;
+                    buffer->image[y*3 * buffer->width + x*3].r = 0*255 ;
+                    buffer->image[y*3 * buffer->width + x*3+1].g = 0*255;
+                    buffer->image[y*3 * buffer->width + x*3+2].b = 0*255;
 
 				}
             free(color);
@@ -589,3 +584,4 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
+

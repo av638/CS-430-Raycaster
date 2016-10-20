@@ -13,6 +13,7 @@ typedef struct Light
     double direction[3];
     double radialATwo, radialAOne, radialAZero;
     double angularAZero;
+    double theta;
 
 } Light;
 

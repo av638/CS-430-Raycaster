@@ -221,6 +221,9 @@ int readScene(FILE *json, Object objects[])
                         objects[numObjects].properties.light.direction[0] = 0;
                         objects[numObjects].properties.light.direction[1] = 0;
                         objects[numObjects].properties.light.direction[2] = 0;
+
+                        //objects[numObjects].properties.light.theta = NULL;
+
                     }
 				}
 
@@ -351,7 +354,25 @@ int readScene(FILE *json, Object objects[])
 					objects[numObjects].properties.light.angularAZero = nextNumber(json);
 				}
 
-			} else if(strcmp(name, "color") == 0) {
+			} else if(strcmp(name, "theta") == 0) {
+
+				skipWhiteSpace(json);
+				c = nextChar(json);
+
+				if(c != ':')
+                {
+					fprintf(stderr, "Error, line number %d; invalid separator '%c'.\n", lineNumber, c);
+					fclose(json);
+					exit(-1);
+				}
+				// If it is the angularAZero then lets place it in the camera structure in the objects array
+				else
+                {
+					skipWhiteSpace(json);
+					objects[numObjects].properties.light.theta = nextNumber(json);
+				}
+
+			}else if(strcmp(name, "color") == 0) {
 
 				skipWhiteSpace(json);
 				c = nextChar(json);
