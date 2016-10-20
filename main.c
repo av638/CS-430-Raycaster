@@ -230,27 +230,20 @@ void calculateSpecular(double ns, double *light, double *lightRef, double *objNo
 // This is used only for spot lights
 double calculateAngularAt(Object objects[], double intersection[3], int numObjects, int currLight)
 {       // direction, theta and angular attenuation
-        double cosAlpha = v3_dot(intersection, objects[currLight].properties.light.direction);
-        double theta = objects[currLight].properties.light.theta;
-        //ADD theta to the parser
-        cosAlpha = cos(cosAlpha)*(PI/180.0);
+    double thetaRad = objects[currLight].properties.light.theta * (M_PI / 180);
+    double cosTheta = cos(thetaRad);
+    double directionCalc = objects[currLight].properties.light.direction[0]+objects[currLight].properties.light.direction[1]+objects[currLight].properties.light.direction[2];
+    //check if light is not a spotlight. if not, return 1.0
+   if (objects[currLight].properties.light.theta == 0 || directionCalc == 0) return 1.0;
+    // It is a spotlight so lets calculate it Vobj dot Vlight = cos alpha < cos theta
+    // cos alpha = Vobj dot Vlight need to convert to degrees to compare to theta
+    // theta is in degrees
 
-        //check if light is not a spotlight. if not, return 1.0
-       if (theta == 0)
-             return 1.0;
-        // It is a spotlight so lets calculate it Vobj dot Vlight = cos alpha < cos theta
-        // cos alpha = Vobj dot Vlight need to convert to degrees to compare to theta
-        // theta is in degrees
-        else if( cosAlpha < theta)
-        {
-            return 0.0;
-        }
-        else
-        {
-            double directionDotLight = v3_dot(objects[currLight].properties.light.direction, intersection);
-            double fang = pow(directionDotLight, objects[currLight].properties.light.angularAZero);
-            return fang;
-        }
+    //double cos_theta = cos(M_PI / 2.0);
+    double cosAlph= v3_dot(objects[currLight].properties.light.direction, intersection);
+    if (cosAlph < cosTheta) return 0.0;
+
+    return pow(cosAlph, objects[currLight].properties.light.angularAZero);
 
 }
 
@@ -407,7 +400,7 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
 
                                     v3_scale(Rdn, -1, lightRayToClosestObj);
 
-                                    double fang = calculateAngularAt(objects, lightRayToClosestObj, numObjects, l);
+                                    double fang = calculateAngularAt(objects, Ron, numObjects, l);
                                     double frad = calculateRadialAt(objects[l].properties.light.radialAOne, objects[l].properties.light.radialATwo, objects[l].properties.light.radialAZero, distanceTLight);
                                     //printf("Color is: %lf", diffuseColor[1]);
                                     //printf("Color is: %lf", diffPlusSpec[2]);
@@ -417,9 +410,7 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
                                     color[1] += frad * fang * diffPlusSpec[1];
                                     color[2] += frad * fang * diffPlusSpec[2];
 
-                                    buffer->image[y*3 * buffer->width + x*3].r = clamp(color[0]) *255;
-                                    buffer->image[y*3 * buffer->width + x*3+1].g = clamp(color[1]) *255;
-                                    buffer->image[y*3 * buffer->width + x*3+2].b = clamp(color[2]) *255;
+
                                 }
 
                             }
@@ -429,7 +420,9 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
                         //printf("Hey we are changing the color!");
                         //1exit(0);
                         // Change object color for simply color
-
+                        buffer->image[y*3 * buffer->width + x*3].r = clamp(color[0]) *255;
+                        buffer->image[y*3 * buffer->width + x*3+1].g = clamp(color[1]) *255;
+                        buffer->image[y*3 * buffer->width + x*3+2].b = clamp(color[2]) *255;
                         /*buffer->image[y*3 * buffer->width + x*3].r = 1 *255;
                         buffer->image[y*3 * buffer->width + x*3+1].g = 0 *255;
                         buffer->image[y*3 * buffer->width + x*3+2].b = 0 *255;*/
@@ -477,7 +470,7 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
                                     double lVector[3] = {Rdn[0], Rdn[1], Rdn[2]}; // light vector is just Rdn
                                     normalize(lVector);
                                     double lReflection[3];
-                                    double V[3] = {Rd[0], Rd[1], Rd[2]};
+                                    double V[3] = {-Rd[0], -Rd[1], -Rd[2]};
                                     v3_reflect(lVector, n, lReflection); // in the book
                                     normalize(lReflection);
                                     double diffuseColor[3];
@@ -489,13 +482,13 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
 
                                     //printf("%d", objects[best_i].properties.sphere.diffuseColor[0]);
                                     calculateDiffuse(n, lVector, objects[l].properties.light.color, objects[best_i].properties.plane.diffuseColor, diffuseColor);
-                                    calculateSpecular(20, lVector, lReflection, n, V, objects[best_i].properties.plane.specularColor, objects[l].properties.light.color, specularColor);
+                                    calculateSpecular(20, lVector, V, n, lReflection, objects[best_i].properties.plane.specularColor, objects[l].properties.light.color, specularColor);
 
                                     v3_add(diffuseColor, specularColor, diffPlusSpec);
 
                                     v3_scale(Rdn, -1, lightRayToClosestObj);
 
-                                    double fang = calculateAngularAt(objects, lightRayToClosestObj, numObjects, l);
+                                    double fang = calculateAngularAt(objects, Ron, numObjects, l);
                                     double frad = calculateRadialAt(objects[l].properties.light.radialAOne, objects[l].properties.light.radialATwo, objects[l].properties.light.radialAZero, distanceTLight);
 
                                     //printf("Color is: %lf", diffuseColor[1]);
@@ -506,15 +499,15 @@ int rayCaster(Object objects[], Pixmap * buffer, double width, double height, in
                                     color[1] += frad * fang * diffPlusSpec[1];
                                     color[2] += frad * fang * diffPlusSpec[2];
 
-                                    buffer->image[y*3 * buffer->width + x*3].r = clamp(color[0]) *255;
-                                    buffer->image[y*3 * buffer->width + x*3+1].g = clamp(color[1]) *255;
-                                    buffer->image[y*3 * buffer->width + x*3+2].b = clamp(color[2]) *255;
+
                                 }
 
                             }
 
                         }
-
+                        buffer->image[y*3 * buffer->width + x*3].r = clamp(color[0]) *255;
+                        buffer->image[y*3 * buffer->width + x*3+1].g = clamp(color[1]) *255;
+                        buffer->image[y*3 * buffer->width + x*3+2].b = clamp(color[2]) *255;
                        /* buffer->image[y*3 * buffer->width + x*3].r = 0 *255;
                         buffer->image[y*3 * buffer->width + x*3+1].g = 1 *255;
                         buffer->image[y*3 * buffer->width + x*3+2].b = 0 *255;*/
