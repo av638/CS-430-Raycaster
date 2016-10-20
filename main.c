@@ -232,9 +232,13 @@ double calculateAngularAt(Object objects[], double intersection[3], int numObjec
 {       // direction, theta and angular attenuation
     double thetaRad = objects[currLight].properties.light.theta * (M_PI / 180);
     double cosTheta = cos(thetaRad);
-    double directionCalc = objects[currLight].properties.light.direction[0]+objects[currLight].properties.light.direction[1]+objects[currLight].properties.light.direction[2];
+    double directZero = objects[currLight].properties.light.direction[0];
+    double directOne = objects[currLight].properties.light.direction[1];
+    double directTwo = objects[currLight].properties.light.direction[2];
+
     //check if light is not a spotlight. if not, return 1.0
-   if (objects[currLight].properties.light.theta == 0 || directionCalc == 0) return 1.0;
+   if (objects[currLight].properties.light.theta == 0) return 1.0;
+   if (directOne && directTwo && directZero) return 1.0;
     // It is a spotlight so lets calculate it Vobj dot Vlight = cos alpha < cos theta
     // cos alpha = Vobj dot Vlight need to convert to degrees to compare to theta
     // theta is in degrees
