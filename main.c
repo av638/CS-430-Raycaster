@@ -238,7 +238,7 @@ double calculateAngularAt(Object objects[], double intersection[3], int numObjec
 
     //check if light is not a spotlight. if not, return 1.0
    if (objects[currLight].properties.light.theta == 0) return 1.0;
-   if (directOne && directTwo && directZero) return 1.0;
+   if (directOne == 0 && directTwo == 0 && directZero == 0) return 1.0;
     // It is a spotlight so lets calculate it Vobj dot Vlight = cos alpha < cos theta
     // cos alpha = Vobj dot Vlight need to convert to degrees to compare to theta
     // theta is in degrees
